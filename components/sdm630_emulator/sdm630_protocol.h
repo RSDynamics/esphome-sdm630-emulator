@@ -36,18 +36,25 @@ struct Values {
 };
 
 // Combine raw sensor readings into the values served over Modbus.
-// NaN inputs (sensor never reported, e.g. L2/L3 on a single-phase connection) become 0 W,
-// and a missing/implausible voltage falls back to the nominal voltage.
+// A phase counts as present when its import power sensor has a value. A phase that is not present
+// (e.g. L2/L3 on a single-phase connection) reads 0 V, 0 A and 0 W, like an unconnected phase on a
+// real meter. For a present phase, a missing/implausible voltage falls back to the nominal voltage
+// (needed to compute the current from the power).
 inline Values compute_values(const float volt[3], const float delivered[3], const float returned[3],
                              float nominal_voltage, float frequency = 50.0f) {
   Values v{};
   v.frequency = frequency;
   for (int i = 0; i < 3; i++) {
+    if (std::isnan(delivered[i])) {
+      v.voltage[i] = 0.0f;
+      v.current[i] = 0.0f;
+      v.power[i] = 0.0f;
+      continue;
+    }
     float u = volt[i];
     if (std::isnan(u) || u < 50.0f) u = nominal_voltage;
-    float pd = std::isnan(delivered[i]) ? 0.0f : delivered[i];
     float pr = std::isnan(returned[i]) ? 0.0f : returned[i];
-    float p = pd - pr;
+    float p = delivered[i] - pr;
     v.voltage[i] = u;
     v.power[i] = p;
     v.current[i] = p / u;

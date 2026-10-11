@@ -82,6 +82,7 @@ bool SDM630Emulator::collect_values_(Values *out) {
     returned[i] = this->power_returned_[i] != nullptr ? this->power_returned_[i]->state : NAN;
   }
   // L1 import is the freshness sensor: if it has no value, do not pretend to have data.
+  // Phases whose import sensor has no value (L2/L3 on a single-phase connection) read all zero.
   if (std::isnan(delivered[0])) return false;
   *out = compute_values(volt, delivered, returned, this->nominal_voltage_);
   return true;

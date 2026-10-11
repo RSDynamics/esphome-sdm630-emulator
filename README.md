@@ -56,7 +56,7 @@ sdm630_emulator:
   port: 502                # default
   unit_id: 1               # Modbus slave address, default 1
   max_age: 10s             # see "Safety"
-  nominal_voltage: 230     # used when a voltage sensor has no value
+  nominal_voltage: 230     # used when a phase has power data but its voltage sensor has no value
   voltage_l1: voltage_l1_sensor
   power_delivered_l1: power_delivered_l1_sensor
   power_returned_l1: power_returned_l1_sensor
@@ -80,6 +80,10 @@ Function code 4 (input registers) and 3 (holding registers, same data), unit ID 
 | `0x0046` | Frequency (50 Hz) |
 
 Everything else below `0x0200` reads 0, above that returns *illegal data address*.
+
+A phase is *present* when its import power sensor has a value. Phases that are not present
+(L2/L3 on a single-phase connection) read 0 V, 0 A and 0 W, like an unconnected phase on a real
+meter. For a present phase without a voltage reading, `nominal_voltage` is used.
 
 Sign convention: **import positive, export negative**. Power per phase is
 `power_delivered - power_returned`. Current is *computed* as power / voltage, because DSMR
